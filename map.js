@@ -16,17 +16,36 @@ var starIcon = new AMap.Icon({
 
 // 从本地存储加载标注数据
 function loadMarkers() {
-    // 先清除地图上所有现有标记
     currentMarkers.forEach(marker => {
         map.remove(marker);
     });
     currentMarkers = [];
 
-    // 从本地存储加载标注数据
     var markers = JSON.parse(localStorage.getItem('markers')) || [];
     markers.forEach(function(marker) {
         addMarkerToMap(marker.latitude, marker.longitude, marker.name, marker.description, marker.person, marker.image, marker.video, marker.id);
     });
+}
+
+// 显示点击位置的指示器
+var clickMarker = null;
+
+function showClickIndicator(lat, lng) {
+    if (clickMarker) {
+        map.remove(clickMarker); // 如果已经有标记，先移除
+    }
+    clickMarker = new AMap.Marker({
+        position: [lng, lat],
+        map: map,
+        icon: new AMap.Icon({
+            size: new AMap.Size(20, 20),
+            image: 'data/click-marker.png', // 自定义点击标记的图标
+            imageSize: new AMap.Size(20, 20)
+        })
+    });
+    setTimeout(() => {
+        map.remove(clickMarker); // 3秒后移除标记
+    }, 3000);
 }
 
 // 在地图上添加标注
@@ -59,7 +78,6 @@ function addMarkerToMap(lat, lng, name, description, person, image, video, marke
         infoWindow.open(map, marker.getPosition());
     });
 
-    // 保存到当前标记数组
     marker.markerId = markerId;
     currentMarkers.push(marker);
 }
@@ -67,21 +85,18 @@ function addMarkerToMap(lat, lng, name, description, person, image, video, marke
 // 删除标注
 function deleteMarker(markerId) {
     if (confirm("确定要删除此标注吗？")) {
-        // 从地图上移除
         var markerToRemove = currentMarkers.find(m => m.markerId === markerId);
         if (markerToRemove) {
             map.remove(markerToRemove);
             currentMarkers = currentMarkers.filter(m => m.markerId !== markerId);
         }
 
-        // 从 localStorage 删除
         var markers = JSON.parse(localStorage.getItem('markers')) || [];
         var updatedMarkers = markers.filter(function(marker) {
             return marker.id !== markerId;
         });
         localStorage.setItem('markers', JSON.stringify(updatedMarkers));
 
-        // 重新加载标注，确保删除后的标注不再出现
         loadMarkers();
     }
 }
@@ -102,6 +117,9 @@ AMap.event.addListener(map, 'click', function(e) {
     document.getElementById("markerDescription").value = '';
     document.getElementById("message").style.display = 'none';
     document.getElementById("uploadMedia").value = '';
+
+    // 显示点击位置的指示器
+    showClickIndicator(currentClickPosition.lat, currentClickPosition.lng);
 });
 
 // 添加标注按钮点击事件
@@ -116,7 +134,7 @@ function addMarker() {
     var fileInput = document.getElementById("uploadMedia");
 
     if (!name || !description) {
-        alert("标注人名称和描述是必填项！");
+        alert("打卡人名称和个人感悟是必填项！");
         return;
     }
 
@@ -174,7 +192,6 @@ function saveMarkerToLocalStorage(marker) {
 function downloadMarkers() {
     var markers = JSON.parse(localStorage.getItem('markers')) || [];
 
-    // 增强数据格式，包含更多信息
     var downloadData = {
         exportTime: new Date().toISOString(),
         totalMarkers: markers.length,
@@ -194,7 +211,7 @@ function downloadMarkers() {
     var blob = new Blob([JSON.stringify(downloadData, null, 2)], { type: 'application/json' });
     var link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = '红色历史地图标注数据_' + new Date().toISOString().split('T')[0] + '.json';
+    link.download = '红色历史地图打卡数据_' + new Date().toISOString().split('T')[0] + '.json';
     link.click();
 }
 
