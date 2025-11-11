@@ -1,124 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数字红色历史地图</title>
-    <style>
-        /* 页面样式 */
-        #container {
-            width: 100%;
-            height: 600px;
-        }
+/* 页面样式 */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f9; /* 更清爽的背景色 */
+}
 
-        /* 固定位置的左下角输入框 */
-        .input-container-fixed {
-            position: fixed;
-            left: 20px;
-            bottom: 20px;
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            max-width: 100%;
-        }
+h1 {
+    text-align: center;
+    color: #333; /* 更深的标题颜色，增加对比度 */
+}
 
-        .input-container-fixed .input-row {
-            margin-bottom: 15px;
-        }
+/* 地图容器 */
+#container {
+    width: 100%;
+    height: 600px;
+    border-radius: 8px; /* 圆角效果 */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 添加阴影，增加立体感 */
+}
 
-        .input-container-fixed label {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
+/* 输入框容器 */
+.input-container-fixed {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.9); /* 透明度降低，增强可见性 */
+    padding: 15px;
+    border-radius: 10px; /* 更加圆润的角 */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* 增大阴影，突显容器 */
+    width: 280px; /* 减小宽度，使其更加紧凑 */
+    max-width: 100%;
+    font-size: 14px;
+}
 
-        .input-container-fixed input,
-        .input-container-fixed textarea {
-            width: 100%;
-            padding: 8px;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
+/* 每行输入框样式 */
+.input-container-fixed .input-row {
+    margin-bottom: 18px;
+}
 
-        .input-container-fixed textarea {
-            height: 120px;
-        }
+/* 标签样式 */
+.input-container-fixed label {
+    display: block;
+    font-size: 13px; /* 微调字体大小 */
+    margin-bottom: 5px;
+    color: #555; /* 更柔和的标签颜色 */
+}
 
-        .input-container-fixed button {
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-        }
+/* 输入框样式 */
+.input-container-fixed input,
+.input-container-fixed textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px; /* 适当减小字体大小 */
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
 
-        .input-container-fixed button:hover {
-            background-color: #45a049;
-        }
+/* 焦点样式 */
+.input-container-fixed input:focus,
+.input-container-fixed textarea:focus {
+    border-color: #4CAF50;
+    outline: none;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
 
-        #message {
-            color: green;
-            font-weight: bold;
-            margin-top: 10px;
-        }
+/* 提交按钮样式 */
+.input-container-fixed button {
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    font-size: 15px; /* 调整按钮字体 */
+    cursor: pointer;
+    width: 100%;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
 
-        /* 右下角的下载按钮 */
-        .download-button-container {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            z-index: 10;
-        }
+/* 按钮悬浮时的颜色 */
+.input-container-fixed button:hover {
+    background-color: #45a049;
+}
 
-        .download-button-container button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-        }
+/* 成功消息 */
+#message {
+    color: #4CAF50;
+    font-weight: bold;
+    margin-top: 10px;
+    text-align: center;
+}
 
-        .download-button-container button:hover {
-            background-color: #45a049;
-        }
-    </style>
-    <script src="https://webapi.amap.com/maps?v=1.4.15&key=YOUR_AMAP_KEY"></script> <!-- 替换为你的高德API Key -->
-</head>
-<body>
-    <h1>数字红色历史地图</h1>
-    <div id="container"></div>
+/* 右下角下载按钮 */
+.download-button-container {
+    position: fixed;
+    right: 20px;
+    bottom: 80px; /* 调整下载按钮位置，避免遮挡表单 */
+    z-index: 10;
+}
 
-    <!-- 固定在左下角的标注输入框 -->
-    <div class="input-container-fixed">
-        <div class="input-row">
-            <label for="markerName">标注人名称:</label>
-            <input type="text" id="markerName" placeholder="请输入标注人名称" required>
-        </div>
+.download-button-container button {
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
 
-        <div class="input-row">
-            <label for="markerDescription">标注描述:</label>
-            <textarea id="markerDescription" placeholder="请输入标注描述" required></textarea>
-        </div>
-
-        <div class="input-row">
-            <label for="uploadMedia">上传图片/视频:</label>
-            <input type="file" id="uploadMedia" accept="image/*,video/*" />
-        </div>
-
-        <button onclick="addMarker()">添加标注</button>
-        <p id="message"></p>
-    </div>
-
-    <!-- 右下角下载标注数据按钮 -->
-    <div class="download-button-container">
-        <button onclick="downloadMarkers()">下载标注数据</button>
-    </div>
-
-    <script src="map.js"></script>
-</body>
-</html>
+/* 下载按钮悬浮时 */
+.download-button-container button:hover {
+    background-color: #45a049;
+}
