@@ -14,21 +14,18 @@ var starIcon = new AMap.Icon({
     imageSize: new AMap.Size(30, 30)
 });
 
-// 从共享文件夹加载标注数据
+// 从本地存储加载标注数据
 function loadMarkers() {
-    // 向主进程请求加载标注数据
-    ipcRenderer.invoke('load-markers').then((markers) => {
-        // 先清除地图上所有现有标记
-        currentMarkers.forEach(marker => {
-            map.remove(marker);
-        });
-        currentMarkers = [];
+    // 先清除地图上所有现有标记
+    currentMarkers.forEach(marker => {
+        map.remove(marker);
+    });
+    currentMarkers = [];
 
-        markers.forEach(function(marker) {
-            addMarkerToMap(marker.latitude, marker.longitude, marker.name, marker.description, marker.person, marker.image, marker.video, marker.id);
-        });
-    }).catch((err) => {
-        console.error('加载标注数据失败', err);
+    // 从本地存储加载标注数据
+    var markers = JSON.parse(localStorage.getItem('markers')) || [];
+    markers.forEach(function(marker) {
+        addMarkerToMap(marker.latitude, marker.longitude, marker.name, marker.description, marker.person, marker.image, marker.video, marker.id);
     });
 }
 
@@ -77,12 +74,12 @@ function deleteMarker(markerId) {
             currentMarkers = currentMarkers.filter(m => m.markerId !== markerId);
         }
 
-        // 从共享文件夹删除
-        ipcRenderer.invoke('delete-marker', markerId).then((message) => {
-            console.log(message);
-        }).catch((err) => {
-            console.error('删除标注失败', err);
+        // 从 localStorage 删除
+        var markers = JSON.parse(localStorage.getItem('markers')) || [];
+        var updatedMarkers = markers.filter(function(marker) {
+            return marker.id !== markerId;
         });
+        localStorage.setItem('markers', JSON.stringify(updatedMarkers));
 
         // 重新加载标注，确保删除后的标注不再出现
         loadMarkers();
@@ -140,7 +137,7 @@ function addMarker() {
     var markerId = 'marker_' + new Date().getTime();
     addMarkerToMap(currentClickPosition.lat, currentClickPosition.lng, name, description, name, image, video, markerId);
 
-    // 创建标注数据
+    // 保存到本地存储
     var newMarker = {
         id: markerId,
         name: name,
@@ -153,12 +150,7 @@ function addMarker() {
         timestamp: new Date().toISOString()
     };
 
-    // 保存到共享文件夹
-    ipcRenderer.invoke('save-marker', newMarker).then((message) => {
-        console.log(message);
-    }).catch((err) => {
-        console.error('保存标注数据失败', err);
-    });
+    saveMarkerToLocalStorage(newMarker);
 
     // 显示成功消息
     document.getElementById("message").style.display = 'block';
@@ -171,37 +163,42 @@ function addMarker() {
     currentClickPosition = null;
 }
 
+// 保存标注数据到本地存储
+function saveMarkerToLocalStorage(marker) {
+    var markers = JSON.parse(localStorage.getItem('markers')) || [];
+    markers.push(marker);
+    localStorage.setItem('markers', JSON.stringify(markers));
+}
+
 // 下载标注数据
 function downloadMarkers() {
-    ipcRenderer.invoke('download-markers').then((markers) => {
-        // 增强数据格式，包含更多信息
-        var downloadData = {
-            exportTime: new Date().toISOString(),
-            totalMarkers: markers.length,
-            markers: markers.map(marker => ({
-                id: marker.id,
-                name: marker.name,
-                description: marker.description,
-                person: marker.person,
-                latitude: marker.latitude,
-                longitude: marker.longitude,
-                timestamp: marker.timestamp,
-                hasImage: !!marker.image,
-                hasVideo: !!marker.video
-            }))
-        };
+    var markers = JSON.parse(localStorage.getItem('markers')) || [];
 
-        var blob = new Blob([JSON.stringify(downloadData, null, 2)], { type: 'application/json' });
-        var link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = '红色历史地图标注数据_' + new Date().toISOString().split('T')[0] + '.json';
-        link.click();
-    }).catch((err) => {
-        console.error('下载标注数据失败', err);
-    });
+    // 增强数据格式，包含更多信息
+    var downloadData = {
+        exportTime: new Date().toISOString(),
+        totalMarkers: markers.length,
+        markers: markers.map(marker => ({
+            id: marker.id,
+            name: marker.name,
+            description: marker.description,
+            person: marker.person,
+            latitude: marker.latitude,
+            longitude: marker.longitude,
+            timestamp: marker.timestamp,
+            hasImage: !!marker.image,
+            hasVideo: !!marker.video
+        }))
+    };
+
+    var blob = new Blob([JSON.stringify(downloadData, null, 2)], { type: 'application/json' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = '红色历史地图标注数据_' + new Date().toISOString().split('T')[0] + '.json';
+    link.click();
 }
 
 // 页面加载时初始化
 window.onload = function() {
-    loadMarkers();  // 加载共享文件夹中的标注数据
+    loadMarkers();
 };
